@@ -1,0 +1,49 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node (uses .nvmrc if present)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - name: Enable corepack
+        run: corepack enable
+      - name: Detect package manager
+        id: pm
+        run: |
+          if [ -f pnpm-lock.yaml ]; then echo "mgr=pnpm" >> $GITHUB_OUTPUT; fi
+          if [ -f yarn.lock ]; then echo "mgr=yarn" >> $GITHUB_OUTPUT; fi
+          if [ -f package-lock.json ]; then echo "mgr=npm" >> $GITHUB_OUTPUT; fi
+      - name: Install deps
+        run: |
+          case "${{ steps.pm.outputs.mgr }}" in
+            pnpm) pnpm i --frozen-lockfile ;;
+            yarn) yarn install --frozen-lockfile ;;
+            npm|"") npm ci ;;
+          esac
+      - name: Lint
+        run: |
+          if npm run | grep -q "lint"; then
+            case "${{ steps.pm.outputs.mgr }}" in
+              pnpm) pnpm lint ;;
+              yarn) yarn lint ;;
+              npm|"") npm run lint ;;
+            esac
+          else
+            echo "No lint script; skipping"
+          fi
+      - name: Build
+        run: |
+          if npm run | grep -q "build"; then
+            case "${{ steps.pm.outputs.mgr }}" in
+              pnpm) pnpm build ;;
+              yarn) yarn build ;;
+              npm|"") npm run build ;;
+            esac
+          else
+            echo "No build script; skipping"
+          fi
