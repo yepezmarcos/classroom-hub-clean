@@ -1,0 +1,61 @@
+{
+  "name": "@hub/api",
+  "version": "0.3.1",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/main.ts",
+    "start": "node dist/main.js",
+    "build": "tsc -p tsconfig.build.json",
+    "start:prod": "node dist/main.js",
+    "start:dev": "ts-node-dev --respawn --transpile-only --prefer-ts-exts src/main.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:status": "prisma migrate status",
+    "prisma:studio": "prisma studio",
+    "db:seed": "prisma db seed",
+    "prisma:seed": "prisma db seed",
+    "migrate:roster": "tsx scripts/migrate_roster.ts",
+    "migrate:comments": "tsx scripts/migrate_comments.ts",
+    "seed:comments": "tsx prisma/seed_comments.ts"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "@types/nodemailer": "^7.0.1",
+    "nodemon": "^3.1.10",
+    "prisma": "6.14.0",
+    "ts-node-dev": "^2.0.0",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@nestjs/axios": "^4.0.1",
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-express": "^11.1.6",
+    "@prisma/client": "6.14.0",
+    "@sendgrid/mail": "^8.1.5",
+    "@types/jsonwebtoken": "^9.0.10",
+    "axios": "^1.11.0",
+    "cheerio": "^1.1.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "csv-parse": "^6.1.0",
+    "cuid": "^3.0.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^7.0.5",
+    "openai": "^4.104.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "stripe": "^18.4.0",
+    "zod": "^3.25.76"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}

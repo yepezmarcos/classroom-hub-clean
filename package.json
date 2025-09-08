@@ -1,0 +1,26 @@
+{
+  "name": "classroom-hub-saas-modern-v5",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "postinstall": "npm run -w @hub/api prisma:generate || npx -y prisma@5.22.0 generate --schema=apps/api/prisma/schema.prisma || echo \"(skipping prisma generate during install)\"",
+    "dev": "concurrently -n web,api -c blue,green \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "npm --workspace=@hub/web run dev",
+    "dev:api": "npm --workspace=@hub/api run start:dev",
+    "build": "npm -ws run build",
+    "format": "prettier -w .",
+    "db:gen": "npm --workspace=@hub/api run prisma:generate",
+    "db:migrate": "npm --workspace=@hub/api run prisma:migrate",
+    "db:studio": "npm --workspace=@hub/api run prisma:studio"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.3.3",
+    "prisma": "^6.14.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.14.0"
+  }
+}

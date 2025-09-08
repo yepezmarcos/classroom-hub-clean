@@ -1,0 +1,20 @@
+# generated / caches
+node_modules/
+.next/
+dist/
+build/
+coverage/
+.out/
+.vercel/
+
+# env & secrets
+.env
+.env.*
+
+# editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# backups
+.git_backup_*/

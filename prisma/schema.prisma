@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// ========== Tenant & Settings ==========
+model Tenant {
+  id               String   @id @default(cuid())
+  name             String   @unique
+  plan             String?
+  stripeCustomerId String?
+  createdAt        DateTime @default(now())
+
+  settings         Settings?
+  memberships      Membership[]
+  users            User[]            @relation("TenantUsers")
+  students         Student[]
+  guardians        Guardian[]
+  classrooms       Classroom[]
+  assignments      Assignment[]
+  grades           Grade[]
+  notes            Note[]
+  commentTemplates CommentTemplate[]
+  StudentGuardian  StudentGuardian[]
+  Enrollment       Enrollment[]
+  Report           Report[]
+}
+
+model Settings {
+  id       String @id @default(cuid())
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  jurisdiction String?
+  board        String?
+  terms        Int?     @default(3)
+  subjects     String[] @default([])
+  gradeBands   String[] @default([])
+  lsCategories Json?
+  lsLevels     Json?
+}
+
+// ========== Users & Memberships ==========
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  tenantId String?
+  tenant   Tenant? @relation("TenantUsers", fields: [tenantId], references: [id])
+
+  memberships Membership[]
+  notes       Note[]       @relation("NoteAuthor")
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  role      String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([tenantId, userId])
+}
+
+// ========== Students & Guardians ==========
+model Student {
+  id        String   @id @default(cuid())
+  tenantId  String
+  first     String
+  last      String
+  grade     String?
+  email     String?
+  gender    String?
+  pronouns  String?
+  iep       Boolean  @default(false)
+  ell       Boolean  @default(false)
+  medical   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant      Tenant            @relation(fields: [tenantId], references: [id])
+  enrollments Enrollment[]
+  links       StudentGuardian[]
+  notes       Note[]
+  reports     Report[]
+  Grade       Grade[]
+}
+
+model Guardian {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now())
+
+  tenant Tenant            @relation(fields: [tenantId], references: [id])
+  links  StudentGuardian[]
+
+  @@index([phone])
+}
+
+model StudentGuardian {
+  id           String  @id @default(cuid())
+  tenantId     String
+  studentId    String
+  guardianId   String
+  relationship String?
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  student  Student  @relation(fields: [studentId], references: [id])
+  guardian Guardian @relation(fields: [guardianId], references: [id])
+
+  @@unique([studentId, guardianId])
+}
+
+// ========== Classes & Enrollments ==========
+model Classroom {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  grade     String?
+  subject   String?
+  code      String?  @unique
+  createdAt DateTime @default(now())
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+  enrollments Enrollment[]
+  assignments Assignment[]
+  reports     Report[]
+}
+
+model Enrollment {
+  id          String   @id @default(cuid())
+  tenantId    String
+  classroomId String
+  studentId   String
+  createdAt   DateTime @default(now())
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  classroom Classroom @relation(fields: [classroomId], references: [id])
+  student   Student   @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, classroomId])
+}
+
+// ========== Assignments & Grades ==========
+model Assignment {
+  id          String   @id @default(cuid())
+  tenantId    String
+  classroomId String
+  name        String
+  max         Float    @default(100)
+  term        String?
+  category    String?
+  createdAt   DateTime @default(now())
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  classroom Classroom @relation(fields: [classroomId], references: [id])
+  grades    Grade[]
+
+  @@unique([classroomId, name])
+  @@index([classroomId])
+  @@index([term])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model Grade {
+  id           String @id @default(cuid())
+  tenantId     String
+  assignmentId String
+  studentId    String
+  score        Float
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id])
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+  student    Student    @relation(fields: [studentId], references: [id])
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId])
+  @@index([assignmentId])
+}
+
+// ========== Notes & Reports ==========
+model Note {
+  id        String   @id @default(cuid())
+  tenantId  String
+  studentId String
+  body      String
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+
+  authorId String?
+  author   User?   @relation("NoteAuthor", fields: [authorId], references: [id])
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  tenantId    String
+  studentId   String
+  classroomId String?
+  body        String
+  createdAt   DateTime @default(now())
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  student   Student    @relation(fields: [studentId], references: [id])
+  classroom Classroom? @relation(fields: [classroomId], references: [id])
+
+  @@index([studentId])
+  @@index([classroomId])
+}
+
+// ========== Comment Bank ==========
+model CommentTemplate {
+  id        String   @id @default(cuid())
+  tenantId  String
+  text      String
+  tags      String[] @default([])
+  subject   String?
+  gradeBand String?
+  topic     String?
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([createdAt])
+}

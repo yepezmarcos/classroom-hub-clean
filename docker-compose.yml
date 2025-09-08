@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: classroom-hub-postgres
+    environment:
+      POSTGRES_USER: hub
+      POSTGRES_PASSWORD: hub
+      POSTGRES_DB: hub
+    ports:
+      - "55432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    container_name: classroom-hub-adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: classroom-hub-mailhog
+    ports:
+      - "8025:8025"
+      - "2025:1025" # host 2025 -> container 1025
+volumes:
+  pgdata:

@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Tenant {
+  id               String            @id @default(cuid())
+  name             String
+  createdAt        DateTime          @default(now())
+  assignments      Assignment[]
+  commentTemplates CommentTemplate[]
+  grades           Grade[]
+  memberships      Membership[]
+  StandardSet      StandardSet[]
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  name        String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime
+  memberships Membership[]
+  Note        Note[]
+}
+
+model Membership {
+  id       String @id @default(cuid())
+  tenantId String
+  userId   String
+  role     String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+}
+
+model Classroom {
+  id          String       @id @default(cuid())
+  name        String
+  code        String?      @unique
+  assignments Assignment[]
+  enrollments Enrollment[]
+}
+
+model Student {
+  id          String            @id @default(cuid())
+  tenantId    String?
+  first       String
+  last        String
+  grade       String?
+  email       String?
+  gender      String?
+  pronouns    String?
+  iep         Boolean           @default(false)
+  ell         Boolean           @default(false)
+  medical     Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  enrollments Enrollment[]
+  grades      Grade[]
+  notes       Note[]
+  links       StudentGuardian[]
+}
+
+model Guardian {
+  id           String            @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  createdAt    DateTime          @default(now())
+  relationship String?
+  tenantId     String?
+  links        StudentGuardian[]
+}
+
+model StudentGuardian {
+  id           String   @id @default(cuid())
+  studentId    String
+  guardianId   String
+  relationship String?
+  tenantId     String?
+  guardian     Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, guardianId])
+}
+
+model Assignment {
+  id          String    @id @default(cuid())
+  tenantId    String
+  classroomId String
+  name        String
+  category    String?
+  term        String?
+  createdAt   DateTime  @default(now())
+  max         Float     @default(100)
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  grades      Grade[]
+}
+
+model Grade {
+  id           String     @id @default(cuid())
+  tenantId     String
+  assignmentId String
+  studentId    String
+  score        Float
+  createdAt    DateTime   @default(now())
+  feedback     String?
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, assignmentId, studentId])
+}
+
+model CommentTemplate {
+  id        String   @id @default(cuid())
+  tenantId  String
+  text      String
+  tags      String[]
+  subject   String?
+  createdAt DateTime @default(now())
+  gradeBand String?
+  level     String?
+  topic     String?
+  updatedAt DateTime
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // NEW: relation to the skill/level join table
+  skills CommentTemplateSkill[]
+
+  @@index([tenantId])
+  @@index([createdAt])
+}
+
+model Enrollment {
+  id          String    @id @default(cuid())
+  studentId   String
+  classroomId String
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  studentId String
+  authorId  String?
+  body      String
+  tags      String[]
+  createdAt DateTime @default(now())
+  tenantId  String?
+  updatedAt DateTime
+  author    User?    @relation(fields: [authorId], references: [id])
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([createdAt])
+}
+
+model Settings {
+  id           String   @id @default("singleton")
+  jurisdiction String?
+  board        String?
+  terms        Int?
+  subjects     String[]
+  gradeBands   String[]
+  updatedAt    DateTime @updatedAt
+  lsCategories Json
+}
+
+model CommentTemplateSkill {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Text
+  commentTemplateId String
+  skill             String
+  level             String?
+  createdAt         DateTime? @default(now())
+
+  template CommentTemplate @relation(fields: [commentTemplateId], references: [id], onDelete: Cascade)
+
+  @@index([commentTemplateId], map: "cts_ctid_idx")
+  @@index([skill], map: "cts_skill_idx")
+  @@map("CommentTemplateSkill")
+}
+
+model StandardSet {
+  id            String          @id
+  tenantId      String
+  type          StandardType    @default(SUBJECT)
+  jurisdiction  String
+  subject       String?
+  gradeBand     String
+  name          String
+  framework     String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime
+  Tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  StandardSkill StandardSkill[]
+
+  @@index([tenantId, type, jurisdiction, subject, gradeBand])
+}
+
+model StandardSkill {
+  id          String      @id
+  setId       String
+  code        String?
+  label       String
+  description String?
+  category    String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime
+  StandardSet StandardSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+}
+
+enum StandardType {
+  GENERAL
+  SUBJECT
+}

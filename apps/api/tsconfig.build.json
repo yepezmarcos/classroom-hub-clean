@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "module": "commonjs",
+    "target": "ES2019",
+    "sourceMap": true,
+    "removeComments": true,
+    "declaration": false,
+    "lib": ["ES2020"],
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "test",
+    "dist",
+    "node_modules",
+    "src/modules/**",
+    "src/prisma/**"          // keep only src/prisma.service.ts (the one you use)
+  ]
+}
