@@ -6,8 +6,11 @@
 
 ## Prereqs
 - Node 18+
-- Docker
-- (Optional) Stripe CLI (for webhook tests)
+- Docker (for local hosting)
+- Vercel
+- Render
+- NeonDB (for the DataBase)
+- Stripe CLI (for webhook tests)
 
 ## Quickstart
 ```bash
@@ -19,11 +22,15 @@ npm run db:migrate
 npm run dev
 Dev URLs
 
-Web: http://localhost:3000
+Web: http://localhost:3000 (Local host)
 
-API Health: http://localhost:4000/health
+Web: https://classroomhub.onrender.com (render deployment)
 
-Adminer (DB UI): http://localhost:8080 (server: postgres, user: hub, pass: hub, db: hub)
+API Health: http://localhost:4000/health (local host)
+
+Adminer (DB UI): http://localhost:8080 (server: postgres, user: hub, pass: hub, db: hub) (local host)
+
+NeonDB: 'postgresql://neondb_owner:npg_dB7mXEk4QzYL@ep-royal-mountain-adwgabbm-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
 
 MailHog (Email UI): http://localhost:8025 (SMTP host=localhost, port=2025)
 
